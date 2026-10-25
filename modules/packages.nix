@@ -41,7 +41,8 @@ in
       # Claude Code's sandbox; were sudo-installed distro packages.
       bubblewrap
       socat
-      # nvim-treesitter compiles parsers; macOS has cc from the Xcode CLT.
+      # nvim-treesitter compiles parsers not in neovim.nix; macOS has cc
+      # from the Xcode CLT.
       gcc
     ];
 }

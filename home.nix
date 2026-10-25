@@ -18,6 +18,7 @@
     ./modules/ssh.nix
     ./modules/claude.nix
     ./modules/packages.nix
+    ./modules/neovim.nix
     ./modules/ghostty.nix
     ./modules/scripts.nix
   ];
