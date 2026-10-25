@@ -102,6 +102,7 @@ let
             { "name": "GITHUB_ENTERPRISE_TOKEN", "mode": "deny" },
             { "name": "GITLAB_TOKEN", "mode": "deny" },
             { "name": "ANTHROPIC_API_KEY", "mode": "deny" },
+            { "name": "CLAUDE_CODE_OAUTH_TOKEN", "mode": "deny" },
             { "name": "OPENAI_API_KEY", "mode": "deny" },
             { "name": "HF_TOKEN", "mode": "deny" },
             { "name": "AWS_ACCESS_KEY_ID", "mode": "deny" },
@@ -163,6 +164,19 @@ let
         ')
       fi
     ''}
+    # devbox (thom-container) keeps the `claude setup-token` token here; Claude
+    # Code reads it via CLAUDE_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR (the descriptor
+    # isn't passed to its commands), and zshenv would reopen it in any shell.
+    # Under /run/user/<uid>, so resolved at activation time.
+    token_files='[]'
+    deny_token='[]'
+    ${lib.optionalString (!isDarwin) ''
+      token_file="/run/user/$(id -u)/claude-oauth-token"
+      token_files=$(${jq} -n --arg t "$token_file" '
+        [{path: $t, mode: "deny"}, {path: "/run/host-claude", mode: "deny"}]
+      ')
+      deny_token=$(${jq} -n --arg t "$token_file" '["Read(/" + $t + ")"]')
+    ''}
     # macOS keychain CLI; the sandbox can't block keychain access via securityd.
     # gh runs outside the sandbox (excludedCommands) so it can read its token
     # from ~/.config/gh/hosts.yml or the keychain, which the sandbox denies.
@@ -182,7 +196,9 @@ let
       --argjson defaults "$defaults" \
       --argjson allow "$allow" \
       --argjson deny "$deny" \
-      --argjson sandbox_write "$sandbox_write" '
+      --argjson sandbox_write "$sandbox_write" \
+      --argjson token_files "$token_files" \
+      --argjson deny_token "$deny_token" '
       . * $defaults
       # Older versions of this template wrote these to the wrong level; the
       # sandbox only reads sandbox.filesystem.allowRead/allowWrite.
@@ -193,7 +209,8 @@ let
       | if ($sandbox_write | length) > 0
         then .sandbox.filesystem.allowWrite = (((.sandbox.filesystem.allowWrite // []) + $sandbox_write) | unique)
         else . end
-      | .permissions.deny = (((.permissions.deny // []) + $deny) | unique)
+      | .sandbox.credentials.files += $token_files
+      | .permissions.deny = (((.permissions.deny // []) + $deny + $deny_token) | unique)
     '
   '';
 in
