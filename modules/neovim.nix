@@ -35,11 +35,26 @@ let
     "yaml"
     "nix"
   ];
+
+  # :TSUpdate reinstalls a parser whose parser-info/<lang>.revision differs
+  # from parsers.lua, so record the revisions this nvim-treesitter expects.
+  revisions = pkgs.runCommand "nvim-treesitter-revisions" { nativeBuildInputs = [ pkgs.luajit ]; } ''
+    mkdir $out
+    luajit ${pkgs.writeText "revisions.lua" ''
+      local parsers = dofile("${treesitter}/lua/nvim-treesitter/parsers.lua")
+      for _, lang in ipairs(arg) do
+        local f = assert(io.open(os.getenv("out") .. "/" .. lang .. ".revision", "w"))
+        f:write(parsers[lang].install_info.revision)
+        f:close()
+      end
+    ''} ${lib.escapeShellArgs languages}
+  '';
 in
 {
   xdg.dataFile = lib.mergeAttrsList (
     map (lang: {
       "nvim/site/parser/${lang}.so".source = "${treesitter.grammarPlugins.${lang}}/parser/${lang}.so";
+      "nvim/site/parser-info/${lang}.revision".source = "${revisions}/${lang}.revision";
       "nvim/site/queries/${lang}".source = "${treesitter}/runtime/queries/${lang}";
     }) languages
   );
