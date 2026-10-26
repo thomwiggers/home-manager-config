@@ -4,7 +4,12 @@
 # nvim-treesitter itself is pinned to the nixpkgs build so the queries match
 # the parsers. Languages not listed here still install (and compile) with
 # :TSInstall.
-{ lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   treesitter = pkgs.vimPlugins.nvim-treesitter;
 
@@ -58,6 +63,25 @@ in
       "nvim/site/queries/${lang}".source = "${treesitter}/runtime/queries/${lang}";
     }) languages
   );
+
+  # nvim-treesitter's installer replaces the links with real files and
+  # directories (and did before this module existed). They are build output,
+  # so remove them rather than have checkLinkTargets refuse to clobber them.
+  home.activation.nvimTreesitterUnlink = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
+    for f in ${
+      lib.escapeShellArgs (
+        lib.concatMap (lang: [
+          "${config.xdg.dataHome}/nvim/site/parser/${lang}.so"
+          "${config.xdg.dataHome}/nvim/site/parser-info/${lang}.revision"
+          "${config.xdg.dataHome}/nvim/site/queries/${lang}"
+        ]) languages
+      )
+    }; do
+      if [[ -e $f && ! -L $f ]]; then
+        run rm -rf $VERBOSE_ARG "$f"
+      fi
+    done
+  '';
 
   # build = false: LazyVim's build hook runs :TSUpdate, which would rebuild
   # the linked parsers.
