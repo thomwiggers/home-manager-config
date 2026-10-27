@@ -8,10 +8,11 @@ You are working for Thom Wiggers.
   deleting branches, dropping data, force-push, etc.)
 
 ## Git Workflow
-- Work in feature branches; never commit directly to main/master
+- By default work in feature branches; never commit directly to main/master
 - Favor small, focused commits and PRs — if a change is logically separate,
   create a new branch for it
 - Stage specific files rather than `git add .` or `git add -A`
+- In research papers, prefer staying on the main branch!
 
 ## Sandbox and GitHub credentials
 - `gh` and git network commands (`git push`, `git pull`, `git fetch`, …) only

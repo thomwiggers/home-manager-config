@@ -141,7 +141,6 @@ let
         }
       },
       "outputStyle": "concise",
-      "remoteControlAtStartup": true,
       "agentPushNotifEnabled": true,
       "theme": "auto",
       "tui": "fullscreen",
