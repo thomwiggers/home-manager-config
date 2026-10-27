@@ -98,6 +98,7 @@ in
     setOptions = [
       "AUTO_PUSHD" # make cd push to directory stack
       "EXTENDED_GLOB" # enable extended globbing patterns (e.g. ^foo, **/, #)
+      "INTERACTIVE_COMMENTS" # allow # comments in interactive commands (pasted snippets)
       "NO_BG_NICE" # don't lower priority of background jobs
       "NO_HUP" # don't kill background jobs when the shell exits
       "NO_LIST_BEEP" # don't beep on ambiguous completions

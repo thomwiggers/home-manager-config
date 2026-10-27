@@ -19,6 +19,11 @@ You are working for Thom Wiggers.
   the entire command. Run them on their own: no `cd … &&`, pipes, or chaining,
   or they run sandboxed and fail to authenticate.
 
+## Shell commands for me to run
+- My shell is zsh with `EXTENDED_GLOB`
+- Single-quote any argument containing `#`, `^`, `~`, `*`, `?` or `[`
+  (e.g. `nix build '.#foo'`), or zsh errors with "no matches found"
+
 ## Python Tooling
 - Use `uv` for package management (not pip/pipenv/conda)
 - Use `ruff` for formatting and linting
