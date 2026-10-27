@@ -23,6 +23,9 @@
       CanonicalDomains = "incus ide-nessie.ts.net";
       # For tab completion.
       HashKnownHosts = "no";
+      # WarnWeakCrypto is OpenSSH >= 10.1; older ssh would reject
+      # config.private. Must precede the Include.
+      IgnoreUnknown = "WarnWeakCrypto";
     };
 
     settings = {
