@@ -20,11 +20,9 @@ You are working for Thom Wiggers.
   or they run sandboxed and fail to authenticate.
 
 ## Shell commands for me to run
-- My shell is zsh with `EXTENDED_GLOB` and without `INTERACTIVE_COMMENTS`
+- My shell is zsh with `EXTENDED_GLOB`
 - Single-quote any argument containing `#`, `^`, `~`, `*`, `?` or `[`
   (e.g. `nix build '.#foo'`), or zsh errors with "no matches found"
-- No `# comments` in command blocks: zsh runs them as commands. Put
-  explanations in prose outside the block
 
 ## Python Tooling
 - Use `uv` for package management (not pip/pipenv/conda)
