@@ -18,6 +18,7 @@
 
     ".claude/CLAUDE.md".source = ../files/claude/CLAUDE.md;
     ".claude/skills/using-ruff/SKILL.md".source = ../files/claude/skills/using-ruff/SKILL.md;
+    ".claude/skills/marking-ai-prose-latex/SKILL.md".source = ../files/claude/skills/marking-ai-prose-latex/SKILL.md;
   };
 
   # lazy.nvim writes lazy-lock.json and lazyvim.json next to init.lua, so link
