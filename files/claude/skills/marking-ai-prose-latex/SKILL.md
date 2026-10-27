@@ -12,6 +12,24 @@ environment: hot pink, URW Chancery, with a bold `SLOP` margin note. A reviewer
 spots AI text at a glance; the human deletes the wrapper once they have
 reviewed it.
 
+## Make the rule permanent in the project
+
+Skills only load when Claude judges they apply, so a quick `.tex` edit can skip this
+one. On activation, check the project's `CLAUDE.md` / `AGENTS.md`: if neither mentions
+`slop`, recommend that the user add this line (propose it; do not edit the file
+unasked):
+
+> Wrap all AI-written prose in LaTeX in the `slop` environment (`\slopfootnote` for
+> footnotes); see the `marking-ai-prose-latex` skill for setup and special cases.
+
+If the project has no `.claude/skills/marking-ai-prose-latex/SKILL.md`, also recommend
+installing a project-local copy and committing it, so collaborators' agents follow the
+same convention (this personal skill only exists on this machine). Adapt the copy to
+the project: point to where the macro and editor highlighting live instead of the setup
+code, and use its paths and build commands. If `.gitignore` ignores `.claude`, it needs
+`.claude/*` plus `!.claude/skills/` (a negation cannot re-include a path inside an
+ignored directory).
+
 ## Rules
 
 - Wrap exactly the sentences you added, directly around them, in the file where
@@ -75,13 +93,27 @@ extension (add it to `.vscode/extensions.json` `recommendations`); add to
       { "backgroundColor": "#ff69b412" },
       { "color": "#ff1493", "fontWeight": "bold" }
     ]
+  },
+  "(\\\\slopfootnote)(\\{(?:\\\\.|[^{}\\\\]|\\{(?:\\\\.|[^{}\\\\]|\\{(?:\\\\.|[^{}\\\\])*\\})*\\})*\\})": {
+    "filterLanguageRegex": "latex",
+    "decorations": [
+      { "color": "#ff1493", "fontWeight": "bold", "overviewRulerColor": "#ff1493" },
+      { "backgroundColor": "#ff69b412" }
+    ]
   }
 }
 ```
 
 The first rule tints whole lines holding `\begin{slop}`/`\end{slop}` and marks them in
 the scrollbar; the second gives a faint background to the wrapped text (one decoration
-per capture group). `\slopfootnote` is not highlighted.
+per capture group). The third does the same for `\slopfootnote{...}`; JS regexes cannot
+match balanced braces, so it handles up to two levels of nested `{...}` (and escaped
+`\{`/`\}`) in the argument.
+
+**Every slop marker needs a rule.** If the project defines another slop environment or
+macro (e.g. `\slopmark`, `\slopinline{...}`, a `slopitem` list), add a matching regex
+in the same commit as the macro, and drop the rule when the macro goes. Unhighlighted
+slop is easy to miss in review.
 
 ## Special cases
 
