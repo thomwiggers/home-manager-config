@@ -15,6 +15,19 @@ in
     ${lib.getExe pkgs.vivid} generate molokai > $out
   '';
 
+  # hm-update: pull this repository and switch to it. Extra arguments go to
+  # `home-manager switch`.
+  home.packages = [
+    (pkgs.writeShellApplication {
+      name = "hm-update";
+      runtimeInputs = [ pkgs.git ];
+      text = ''
+        git -C "${config.xdg.configHome}/home-manager" pull --ff-only
+        exec home-manager switch -b hm-bak "$@"
+      '';
+    })
+  ];
+
   # devbox launcher for https://github.com/thomwiggers/thom-container (macOS
   # only). Updated with `nix flake update thom-container`.
   home.file.".local/bin/devbox" = lib.mkIf isDarwin {
