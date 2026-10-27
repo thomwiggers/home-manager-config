@@ -65,8 +65,10 @@ in
   );
 
   # nvim-treesitter's installer replaces the links with real files and
-  # directories (and did before this module existed). They are build output,
-  # so remove them rather than have checkLinkTargets refuse to clobber them.
+  # directories, and links queries into its lazy.nvim checkout (and did
+  # before this module existed). They are build output, so remove them
+  # rather than have checkLinkTargets refuse to clobber them. Our own links
+  # point into the store.
   home.activation.nvimTreesitterUnlink = lib.hm.dag.entryBefore [ "checkLinkTargets" ] ''
     for f in ${
       lib.escapeShellArgs (
@@ -77,7 +79,7 @@ in
         ]) languages
       )
     }; do
-      if [[ -e $f && ! -L $f ]]; then
+      if [[ -L $f && $(readlink "$f") != ${builtins.storeDir}/* ]] || [[ -e $f && ! -L $f ]]; then
         run rm -rf $VERBOSE_ARG "$f"
       fi
     done
