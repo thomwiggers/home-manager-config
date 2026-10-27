@@ -53,6 +53,36 @@ below. Otherwise add:
   \selectfont\textbf{SLOP:} #1\endgroup}}
 ```
 
+### Editor highlighting (VS Code)
+
+Highlights slop regions in the source, too. Needs the `fabiospampinato.vscode-highlight`
+extension (add it to `.vscode/extensions.json` `recommendations`); add to
+`.vscode/settings.json`:
+
+```json
+"highlight.regexes": {
+  "(\\\\(?:begin|end)\\{slop\\})": {
+    "filterLanguageRegex": "latex",
+    "decorations": [
+      { "color": "#ff1493", "fontWeight": "bold", "backgroundColor": "#ff69b430",
+        "isWholeLine": true, "overviewRulerColor": "#ff1493" }
+    ]
+  },
+  "(\\\\begin\\{slop\\})([\\s\\S]*?)(\\\\end\\{slop\\})": {
+    "filterLanguageRegex": "latex",
+    "decorations": [
+      { "color": "#ff1493", "fontWeight": "bold" },
+      { "backgroundColor": "#ff69b412" },
+      { "color": "#ff1493", "fontWeight": "bold" }
+    ]
+  }
+}
+```
+
+The first rule tints whole lines holding `\begin{slop}`/`\end{slop}` and marks them in
+the scrollbar; the second gives a faint background to the wrapped text (one decoration
+per capture group). `\slopfootnote` is not highlighted.
+
 ## Special cases
 
 | Situation | What happens / what to do |
@@ -63,7 +93,7 @@ below. Otherwise add:
 | Footnotes | Patched `\@footnotetext` suppresses the note; prefer `\slopfootnote`. |
 | `\begin{slop}` spanning paragraphs | Fine; one margin note at the start only. Prefer one wrapper per paragraph for reviewability. |
 | Inline math inside slop | Fine; math font is unaffected, only colored. |
-| Proof/commentary files shared via symlinked macros | Edit the canonical macro file; copies (e.g. `proof/paper-macros.tex`) need the same change. |
+| Macro file shared between documents (e.g. a proof reusing the paper's macros) | Edit the canonical file; symlinks follow, real copies need the same change. |
 | `pzc` missing | Font substitution warning; install URW base35 / `texlive-fontsextra`. `\bfseries` with `pzc` substitutes medium weight (harmless warning). |
 
 ## Verify
