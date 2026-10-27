@@ -212,6 +212,9 @@ say "Activating $user@$role"
 # -b: files Home Manager would overwrite (e.g. chezmoi-written dotfiles) are
 # kept as <file>.hm-bak.
 in_nix nix run "$repo#home-manager" -- switch -b hm-bak --flake "$repo#$user@$role"
+# A fresh install has every news item unread; showing them marks them read.
+PAGER=cat in_nix nix run "$repo#home-manager" -- news --flake "$repo#$user@$role" >/dev/null ||
+	say "Couldn't dismiss Home Manager news"
 
 # --- 4. Register this machine ---------------------------------------------------
 
