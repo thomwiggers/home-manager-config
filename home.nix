@@ -21,6 +21,7 @@
     ./modules/neovim.nix
     ./modules/ghostty.nix
     ./modules/scripts.nix
+    ./modules/auto-update.nix
   ];
 
   # home.username / home.homeDirectory are set per configuration in flake.nix.
