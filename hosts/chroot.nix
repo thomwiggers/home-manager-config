@@ -4,4 +4,5 @@
 {
   imports = [ ../modules/linux.nix ];
   thom.container = false;
+  thom.autoUpdate.nixUserChroot = true;
 }
