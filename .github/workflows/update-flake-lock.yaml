@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "0 5 * * 1"
   workflow_dispatch:
+    inputs:
+      input:
+        description: Flake input to update (empty updates all)
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -15,7 +20,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/determinate-nix-action@v3
+      # A single-input update (dispatched by thom-container on every image
+      # push to main) gets its own branch, so it doesn't reset the weekly PR.
       - uses: DeterminateSystems/update-flake-lock@v24
         with:
-          pr-title: "flake.lock: update inputs"
+          inputs: ${{ inputs.input }}
+          branch: ${{ inputs.input && format('update_flake_lock_{0}', inputs.input) || 'update_flake_lock_action' }}
+          pr-title: "${{ inputs.input && format('flake.lock: update {0}', inputs.input) || 'flake.lock: update inputs' }}"
           pr-labels: dependencies
