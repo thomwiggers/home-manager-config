@@ -15,7 +15,7 @@ Commit directly to `main`; stage specific files.
 
 | Path | Purpose |
 | --- | --- |
-| `flake.nix` | `roles` (darwin, linux, linux-arm, chroot) × `users` (thom, thomwiggers) → `homeConfigurations."<user>@<role>"`; `machines/` adds `<user>@<hostname>` aliases |
+| `flake.nix` | `roles` (darwin, linux, linux-arm, chroot) × `users` (thom, thomwiggers) → `homeConfigurations."<user>@<role>"`; `machines/` adds `<user>@<hostname>` aliases; `hm-update` falls back to the platform's role for unregistered hosts |
 | `home.nix`, `hosts/<role>.nix` | module imports; per-role settings |
 | `modules/*.nix` | one module per program |
 | `files/` | static files, linked by `modules/files.nix` |

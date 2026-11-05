@@ -54,14 +54,32 @@ in
   config = lib.mkMerge [
     {
       # hm-update: pull this repository and switch to it. Extra arguments go
-      # to `home-manager switch`.
+      # to `home-manager switch`. The configuration is <user>@<role>: the
+      # role registered in machines/<hostname -s>, else the one bootstrap.sh
+      # picks by platform. Unregistered hosts (containers) need no entry.
       home.packages = [
         (pkgs.writeShellApplication {
           name = "hm-update";
           runtimeInputs = [ pkgs.git ];
           text = ''
-            git -C "${config.xdg.configHome}/home-manager" pull --ff-only
-            exec home-manager switch -b hm-bak "$@"
+            repo="${config.xdg.configHome}/home-manager"
+            git -C "$repo" pull --ff-only
+            host=$(uname -n)
+            host=''${host%%.*}
+            if [ -s "$repo/machines/$host" ]; then
+              role=$(cat "$repo/machines/$host")
+            else
+              case "$(uname -s)/$(uname -m)" in
+                Darwin/arm64) role=darwin ;;
+                Linux/x86_64) role=linux ;;
+                Linux/aarch64) role=linux-arm ;;
+                *)
+                  echo "hm-update: unsupported platform; register it in machines/$host" >&2
+                  exit 1
+                  ;;
+              esac
+            fi
+            exec home-manager switch --flake "$repo#$(id -un)@$role" -b hm-bak "$@"
           '';
         })
       ];
