@@ -50,7 +50,27 @@ let
 
   # bubblewrap can't mount a fresh /proc inside unprivileged containers
   # (lxcfs overmounts it under LXC/Incus; Docker and Podman mask parts of
-  # it), so reuse the container's /proc there. Set per host (thom.container).
+  # it), so reuse the container's /proc there. thom.container forces the
+  # choice; by default activation asks bubblewrap itself, so the result
+  # follows the machine (VM or container) rather than the role.
+  bwrap = lib.getExe pkgs.bubblewrap;
+  weakerSandbox =
+    if config.thom.container != null then
+      "weaker=${lib.boolToString config.thom.container}"
+    else if isDarwin then
+      "weaker=false"
+    else
+      ''
+        if ${bwrap} --ro-bind / / --dev /dev --unshare-pid --proc /proc true 2>/dev/null; then
+          weaker=false
+        elif ${bwrap} --ro-bind / / --dev /dev --unshare-pid true 2>/dev/null; then
+          weaker=true
+        else
+          echo "claude-settings-merge: bubblewrap can't create a sandbox here; Claude Code's sandbox will be unavailable" >&2
+          weaker=false
+        fi
+      '';
+
   # The chezmoi-era key path stays denied: bootstrap.sh copies the identity
   # from there, and the old copy lingers until chezmoi is purged.
   settingsMerge = pkgs.writeShellScript "claude-settings-merge" ''
@@ -60,6 +80,8 @@ let
     if [ -z "$input" ]; then
       input='{}'
     fi
+
+    ${weakerSandbox}
 
     defaults='{
       "permissions": {
@@ -76,7 +98,6 @@ let
       "sandbox": {
         "enabled": true,
         "failIfUnavailable": true,
-        "enableWeakerNestedSandbox": ${lib.boolToString config.thom.container},
         "excludedCommands": [
           "git fetch", "git fetch *",
           "git pull", "git pull *",
@@ -203,8 +224,10 @@ let
       --argjson deny "$deny" \
       --argjson sandbox_write "$sandbox_write" \
       --argjson token_files "$token_files" \
-      --argjson deny_token "$deny_token" '
+      --argjson deny_token "$deny_token" \
+      --argjson weaker "$weaker" '
       . * $defaults
+      | .sandbox.enableWeakerNestedSandbox = $weaker
       # Older versions of this template wrote these to the wrong level; the
       # sandbox only reads sandbox.filesystem.allowRead/allowWrite.
       | del(.sandbox.allowRead, .sandbox.allowWrite)

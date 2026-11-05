@@ -3,5 +3,4 @@
 { ... }:
 {
   imports = [ ../modules/linux.nix ];
-  thom.container = true;
 }

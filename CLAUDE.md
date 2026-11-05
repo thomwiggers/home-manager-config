@@ -16,7 +16,7 @@ Commit directly to `main`; stage specific files.
 | Path | Purpose |
 | --- | --- |
 | `flake.nix` | `roles` (darwin, linux, linux-arm, chroot) × `users` (thom, thomwiggers) → `homeConfigurations."<user>@<role>"`; `machines/` adds `<user>@<hostname>` aliases |
-| `home.nix`, `hosts/<role>.nix` | module imports; per-role settings (`thom.container`) |
+| `home.nix`, `hosts/<role>.nix` | module imports; per-role settings |
 | `modules/*.nix` | one module per program |
 | `files/` | static files, linked by `modules/files.nix` |
 | `secrets/*.age` | age-encrypted files; targets in `modules/secret-files.nix`, decrypted at activation by `modules/secrets.nix` |
