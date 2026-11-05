@@ -4,6 +4,7 @@
 #
 #   ./bootstrap.sh [role]
 #   curl -fsSL https://raw.githubusercontent.com/thomwiggers/home-manager-config/main/bootstrap.sh | sh [-s -- role]
+#   curl -fsSL .../bootstrap.sh | THOM_NO_SECRETS=1 sh      # unattended, no secrets
 #
 # Roles (see flake.nix): darwin, linux, linux-arm, chroot. Default: the role
 # this machine was registered with (machines/<hostname>), else darwin on
@@ -190,7 +191,11 @@ fi
 
 # --- 2. age identity ------------------------------------------------------------
 
-if [[ ! -s $age_identity ]]; then
+# THOM_NO_SECRETS=1 skips this step for unattended provisioning (cloud-init
+# has no terminal for the passphrase); activation then skips the secrets.
+if [[ -n ${THOM_NO_SECRETS:-} ]]; then
+	say "THOM_NO_SECRETS is set; not installing the age identity"
+elif [[ ! -s $age_identity ]]; then
 	(
 		umask 077
 		mkdir -p "$(dirname "$age_identity")"

@@ -120,24 +120,20 @@ host file) if a machine doesn't fit.
 - `gh config set …` and `gpg`'s own config edits now fail (read-only store
   files). Change those through Nix instead.
 
-## Open: provisioning without secrets (cloud-init)
+## Provisioning without secrets (cloud-init)
 
-chezmoi supports unattended, secret-less provisioning via
-`chezmoi init --apply --exclude encrypted`
-(`run_onchange_before_decrypt-private-key.sh.tmpl` checks for it). The Nix
-setup has no equivalent yet:
+chezmoi supported unattended, secret-less provisioning via
+`chezmoi init --apply --exclude encrypted`. The replacement is
+`THOM_NO_SECRETS=1`, which makes `bootstrap.sh` skip the age identity step
+instead of prompting for the `key.txt.age` passphrase. `home-manager switch`
+then warns that `~/.config/age/keys.txt` is missing and skips
+`decryptSecrets`; ssh ignores the missing `Include config.private`. The
+cloud-init profiles run:
 
-- `home-manager switch` itself already copes: with no
-  `~/.config/age/keys.txt`, `decryptSecrets` warns and skips, and ssh ignores
-  the missing `Include config.private`.
-- `bootstrap.sh` does not: with no chezmoi key it prompts for the
-  `key.txt.age` passphrase, which blocks cloud-init.
+    sudo -H -u thom sh -c 'cd && curl -fsSL https://raw.githubusercontent.com/thomwiggers/home-manager-config/main/bootstrap.sh | THOM_NO_SECRETS=1 sh'
 
-To do: a non-interactive no-secrets mode for `bootstrap.sh` (e.g.
-`--no-secrets` / `THOM_NO_SECRETS=1`) that skips the identity step, and
-optionally a `thom.age.enable` option so such hosts don't even warn. Also
-check that bootstrap works as a cloud-init `runcmd` (non-login shell, run as
-the target user via `su -l`, no TTY for `sudo`).
+Open: a `thom.age.enable` option so such hosts don't warn, and a test of
+bootstrap under a real cloud-init `runcmd` (no TTY for `sudo`).
 
 ## Cut-over (manual)
 
