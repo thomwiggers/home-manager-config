@@ -12,7 +12,7 @@ that removed them).
 |---|---|
 | `flake.nix` | nixpkgs (unstable) + home-manager (follows nixpkgs) + `thom-container` (devbox). `homeConfigurations."<user>@<role>"` for `thom` and `thomwiggers`, `checks`, `packages.home-manager` (pinned CLI) |
 | `home.nix` | shared entry point; imports `modules/*` |
-| `hosts/<role>.nix` | per-role differences (`thom.container`, genericLinux) |
+| `hosts/<role>.nix` | per-role differences (genericLinux, nix-user-chroot) |
 | `modules/options.nix` | `thom.container`, `thom.claude.defaultMode` |
 | `modules/zsh.nix` | programs.zsh, programs.starship, session vars |
 | `modules/git.nix` | programs.git, programs.gh, programs.gpg |
@@ -35,14 +35,17 @@ and "inside a container". Configurations are therefore per role:
 | Config | System | `thom.container` | Notes |
 |---|---|---|---|
 | `<user>@darwin` | aarch64-darwin | false | Macs |
-| `<user>@linux` | x86_64-linux | true | e.g. `development` (Incus/LXC) |
-| `<user>@linux-arm` | aarch64-linux | true | devbox under Apple's container |
-| `<user>@chroot` | x86_64-linux | false | no root; Nix in `~/.nix` via nix-user-chroot |
+| `<user>@linux` | x86_64-linux | auto | Incus/LXC containers (e.g. `development`) and VMs |
+| `<user>@linux-arm` | aarch64-linux | auto | devbox under Apple's container |
+| `<user>@chroot` | x86_64-linux | auto | no root; Nix in `~/.nix` via nix-user-chroot |
 
-`thom.container` replaces chezmoi's runtime detection (`$container`,
-`/.dockerenv`, `/run/.containerenv`, `/run/systemd/container`) and only feeds
-Claude Code's `sandbox.enableWeakerNestedSandbox`. Add a role (or override in a
-host file) if a machine doesn't fit.
+`thom.container` only feeds Claude Code's
+`sandbox.enableWeakerNestedSandbox`. chezmoi guessed it from container
+markers (`$container`, `/.dockerenv`, `/run/.containerenv`,
+`/run/systemd/container`). We instead probe bubblewrap at activation: if it
+cannot mount a fresh `/proc` in a new PID namespace but can sandbox without
+one, the weaker sandbox is on. The probe runs per machine, so one role serves
+both containers and VMs. Set `thom.container` in a host file to force it.
 
 ## Decisions
 

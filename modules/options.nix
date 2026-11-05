@@ -2,12 +2,13 @@
 {
   options.thom = {
     container = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
+      type = lib.types.nullOr lib.types.bool;
+      default = null;
       description = ''
         Whether this host runs inside an unprivileged container (LXC/Incus,
         Docker, Podman, Apple container). Bubblewrap can't mount a fresh /proc
         there, so Claude Code's sandbox needs enableWeakerNestedSandbox.
+        null: on Linux, probe bubblewrap at activation; false on macOS.
       '';
     };
     claude.defaultMode = lib.mkOption {
