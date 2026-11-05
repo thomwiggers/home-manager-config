@@ -131,6 +131,18 @@
         default = home-manager.packages.${system}.home-manager;
       });
 
+      # `nix flake init -t dotfiles#devshell` (registry entry in
+      # modules/flake-registry.nix).
+      templates.devshell = {
+        path = ./templates/devshell;
+        description = "Minimal devShell for direnv's `use flake`";
+        welcomeText = ''
+          Add packages to `packages` in flake.nix. In a git repository, run
+          `git add -N flake.nix .envrc` (flakes only see tracked files) and
+          add `.direnv/` to .gitignore. Outside /project, run `direnv allow`.
+        '';
+      };
+
       formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-tree);
     };
 }
