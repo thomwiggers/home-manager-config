@@ -46,11 +46,11 @@
     "thom-container": {
       "flake": false,
       "locked": {
-        "lastModified": 1793194046,
-        "narHash": "sha256-qLMfPG1w6VZGcgVR8CCD88qK5tRKBIuTBu50S2fHw4s=",
+        "lastModified": 1793870482,
+        "narHash": "sha256-DZybQk3rvzssRR+N/SvcdI/6t5/iySK5NrlZcF5PQlE=",
         "owner": "thomwiggers",
         "repo": "thom-container",
-        "rev": "5a09d9162dc499af0ec07de26d08859ac078a643",
+        "rev": "40b9b51e369caf8803a6ea87a551c8e1331dcb15",
         "type": "github"
       },
       "original": {
