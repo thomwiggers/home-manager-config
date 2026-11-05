@@ -6,6 +6,7 @@
 # :TSInstall.
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
@@ -87,6 +88,9 @@ in
 
   # build = false: LazyVim's build hook runs :TSUpdate, which would rebuild
   # the linked parsers.
+  # nixd instead of LazyVim's nil: it completes package names from the
+  # flake's nixpkgs input and Home Manager options from this checkout. nixd
+  # comes from Nix (packages.nix), not Mason.
   xdg.configFile."nvim/lua/plugins/nix.lua".text = ''
     return {
       {
@@ -94,6 +98,27 @@ in
         dir = "${treesitter}",
         pin = true,
         build = false,
+      },
+      {
+        "neovim/nvim-lspconfig",
+        opts = {
+          servers = {
+            nil_ls = { enabled = false },
+            nixd = {
+              mason = false,
+              settings = {
+                nixd = {
+                  nixpkgs = { expr = "import ${inputs.nixpkgs} { }" },
+                  options = {
+                    ["home-manager"] = {
+                      expr = [[(builtins.getFlake "git+file://${config.xdg.configHome}/home-manager").homeConfigurations."${config.home.username}@linux".options]],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     }
   '';

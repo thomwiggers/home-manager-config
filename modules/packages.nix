@@ -20,8 +20,9 @@ in
       dust
       jq
       neovim
-      # LazyVim's lang.nix extra: language server and formatter.
-      nil
+      # LazyVim's lang.nix extra, with nixd instead of nil (see neovim.nix):
+      # language server, formatter and linter.
+      nixd
       nixfmt
       python3
       ripgrep
