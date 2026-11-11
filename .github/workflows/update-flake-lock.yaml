@@ -18,12 +18,12 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Upstream Nix, as on the machines (bootstrap.sh).
       - uses: cachix/install-nix-action@v31
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: DeterminateSystems/update-flake-lock@v24
+      - uses: DeterminateSystems/update-flake-lock@v29
         with:
           inputs: ${{ inputs.input }}
           branch: ${{ inputs.input && format('update_flake_lock_{0}', inputs.input) || 'update_flake_lock_action' }}
