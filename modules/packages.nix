@@ -19,6 +19,7 @@ in
       curl
       dust
       jq
+      htop
       neovim
       # LazyVim's lang.nix extra, with nixd instead of nil (see neovim.nix):
       # language server, formatter and linter.
