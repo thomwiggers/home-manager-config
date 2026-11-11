@@ -1,0 +1,22 @@
+version: 2
+updates:
+  # Bumps flake.lock inputs. thom-container image pushes still dispatch
+  # update-flake-lock.yaml for an immediate single-input PR.
+  - package-ecosystem: nix
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      flake-inputs:
+        patterns: ["*"]
+    commit-message:
+      prefix: "flake.lock"
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ["*"]

@@ -1,8 +1,8 @@
 name: update-flake-lock
 
+# Weekly updates come from Dependabot (.github/dependabot.yml); this only
+# handles single-input updates dispatched by thom-container.
 on:
-  schedule:
-    - cron: "0 5 * * 1"
   workflow_dispatch:
     inputs:
       input:
@@ -20,8 +20,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/determinate-nix-action@v3
-      # A single-input update (dispatched by thom-container on every image
-      # push to main) gets its own branch, so it doesn't reset the weekly PR.
       - uses: DeterminateSystems/update-flake-lock@v24
         with:
           inputs: ${{ inputs.input }}
