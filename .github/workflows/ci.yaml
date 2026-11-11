@@ -17,3 +17,21 @@ jobs:
       - uses: DeterminateSystems/determinate-nix-action@v3
       # Builds every homeConfiguration native to the runner (darwin on macos-latest).
       - run: nix flake check
+
+  # Merge Dependabot PRs once every build has passed. Lives here rather than
+  # relying on GitHub auto-merge, so it can't merge before CI without branch
+  # protection.
+  automerge:
+    needs: build
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - run: gh pr merge "$PR" --merge --match-head-commit "$SHA"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
