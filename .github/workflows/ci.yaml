@@ -14,6 +14,34 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: DeterminateSystems/determinate-nix-action@v3
-      # Builds every homeConfiguration native to the runner (darwin on macos-latest).
+      # Upstream Nix, as on the machines (bootstrap.sh).
+      - uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+      # Pulls from and pushes to the Cachix cache, so builds missing from
+      # cache.nixos.org (e.g. Darwin Swift builds lagging on Hydra) are done
+      # once and reach the machines too. Push needs CACHIX_AUTH_TOKEN; without
+      # it (e.g. Dependabot PRs) the cache is only read.
+      - uses: cachix/cachix-action@v17
+        with:
+          name: thomwiggers
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - run: nix flake check
+
+  # Merge Dependabot PRs once every build has passed. Lives here rather than
+  # relying on GitHub auto-merge, so it can't merge before CI without branch
+  # protection.
+  automerge:
+    needs: build
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - run: gh pr merge "$PR" --merge --match-head-commit "$SHA"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}

@@ -189,6 +189,33 @@ else
 	need nix
 fi
 
+# --- 1b. Binary cache ----------------------------------------------------------
+
+# CI pushes what cache.nixos.org lacks (e.g. Darwin builds Hydra hasn't done
+# yet) to this Cachix cache. The daemon ignores substituters from untrusted
+# users, so a multi-user install needs them in the system config. Single-user
+# installs (/nix owned by us, or chroot) are skipped.
+cachix_url=https://thomwiggers.cachix.org
+cachix_key=thomwiggers.cachix.org-1:+5tvAop7ZbNFMaglyPWTxh2oBvYfdhUS4N0JgEMtWwk=
+
+add_binary_cache() {
+	[[ $role == chroot || -O /nix/store ]] && return
+	# Determinate Nix owns nix.conf and includes nix.custom.conf for local edits.
+	local conf=/etc/nix/nix.conf
+	[[ -e /etc/nix/nix.custom.conf ]] && conf=/etc/nix/nix.custom.conf
+	grep -qF "$cachix_url" "$conf" 2>/dev/null && return
+	say "Adding the $cachix_url binary cache to $conf (needs sudo)"
+	printf '\n# CI binary cache (dotfiles bootstrap.sh)\nextra-substituters = %s\nextra-trusted-public-keys = %s\n' \
+		"$cachix_url" "$cachix_key" | sudo tee -a "$conf" >/dev/null
+	if [[ $os == Darwin ]]; then
+		sudo launchctl kickstart -k system/org.nixos.nix-daemon ||
+			sudo launchctl kickstart -k system/systems.determinate.nix-daemon
+	else
+		sudo systemctl restart nix-daemon
+	fi || say "Couldn't restart nix-daemon; restart it to use the cache"
+}
+add_binary_cache
+
 # --- 2. age identity ------------------------------------------------------------
 
 # THOM_NO_SECRETS=1 skips this step for unattended provisioning (cloud-init
