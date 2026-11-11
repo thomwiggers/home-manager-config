@@ -20,9 +20,8 @@ jobs:
       # once and reach the machines too. Push needs CACHIX_AUTH_TOKEN; without
       # it (e.g. Dependabot PRs) the cache is only read.
       - uses: cachix/cachix-action@v17
-        if: vars.CACHIX_CACHE != ''
         with:
-          name: ${{ vars.CACHIX_CACHE }}
+          name: thomwiggers
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - run: nix flake check
 
