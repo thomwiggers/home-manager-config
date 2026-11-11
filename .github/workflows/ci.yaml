@@ -14,7 +14,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - uses: DeterminateSystems/determinate-nix-action@v3
+      # Upstream Nix, as on the machines (bootstrap.sh).
+      - uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
       # Pulls from and pushes to the Cachix cache, so builds missing from
       # cache.nixos.org (e.g. Darwin Swift builds lagging on Hydra) are done
       # once and reach the machines too. Push needs CACHIX_AUTH_TOKEN; without
