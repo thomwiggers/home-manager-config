@@ -12,9 +12,27 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      actions: write # purge old caches
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/determinate-nix-action@v3
+      # Insurance for when cache.nixos.org lacks something (e.g. Darwin Swift
+      # builds lagging on Hydra): the store is saved from main only, so PRs
+      # restore main's latest and the 10 GB cache quota holds one per OS.
+      - uses: nix-community/cache-nix-action@v7
+        with:
+          primary-key: nix-${{ runner.os }}-${{ hashFiles('**/*.nix', 'flake.lock') }}
+          restore-prefixes-first-match: nix-${{ runner.os }}-
+          save: ${{ github.event_name == 'push' }}
+          # Trim garbage that accumulates as each save builds on the last.
+          gc-max-store-size-macos: 8G
+          gc-max-store-size-linux: 3G
+          purge: ${{ github.event_name == 'push' }}
+          purge-prefixes: nix-${{ runner.os }}-
+          purge-created: 0
+          purge-primary-key: never
       # Builds every homeConfiguration native to the runner (darwin on macos-latest).
       - run: nix flake check
 
