@@ -23,7 +23,6 @@ let
     fi
 
     defaults='{
-      "autoUpdatesChannel": "latest",
       "prStatusFooterEnabled": true,
       "workflowSizeGuideline": "small",
       "hasSeenAutoModeEntryWarning": true,
@@ -85,6 +84,7 @@ let
     ${weakerSandbox}
 
     defaults='{
+      "autoUpdatesChannel": "latest",
       "permissions": {
         "defaultMode": ${builtins.toJSON cfg.defaultMode}
       },
