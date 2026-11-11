@@ -23,6 +23,7 @@ let
     fi
 
     defaults='{
+      "autoUpdatesChannel": "latest",
       "prStatusFooterEnabled": true,
       "workflowSizeGuideline": "small",
       "hasSeenAutoModeEntryWarning": true,
