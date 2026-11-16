@@ -13,4 +13,9 @@
   # compiled-in search path (and ~/.terminfo is always searched first).
   home.packages = [ pkgs.ghostty.terminfo ];
   home.sessionVariables.TERMINFO_DIRS = "${config.home.profileDirectory}/share/terminfo:$TERMINFO_DIRS";
+
+  # Linux hosts are only ever reached remotely, but not always over ssh:
+  # shells under the Rex server have no SSH_CONNECTION, which is all
+  # starship's ssh_only looks at.
+  programs.starship.settings.hostname.ssh_only = false;
 }
