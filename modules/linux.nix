@@ -14,8 +14,15 @@
   home.packages = [ pkgs.ghostty.terminfo ];
   home.sessionVariables.TERMINFO_DIRS = "${config.home.profileDirectory}/share/terminfo:$TERMINFO_DIRS";
 
-  # Linux hosts are only ever reached remotely, but not always over ssh:
-  # shells under the Rex server have no SSH_CONNECTION, which is all
-  # starship's ssh_only looks at.
-  programs.starship.settings.hostname.ssh_only = false;
+  # Show the hostname in Rex shells as well as over ssh. Shells under the Rex
+  # server have no SSH_CONNECTION, which is all ssh_only looks at, but Rex
+  # sets REX_SESSION in every shell it starts. Linux only: on the Macs Rex
+  # shells are local.
+  programs.starship.settings.hostname = {
+    ssh_only = false;
+    detect_env_vars = [
+      "SSH_CONNECTION"
+      "REX_SESSION"
+    ];
+  };
 }
