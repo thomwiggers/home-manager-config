@@ -14,6 +14,17 @@
 let
   treesitter = pkgs.vimPlugins.nvim-treesitter;
 
+  # The flake role whose options nixd should complete, by platform as in
+  # hm-update's fallback (chroot shares linux's options).
+  role =
+    with pkgs.stdenv.hostPlatform;
+    if isDarwin then
+      "darwin"
+    else if isAarch64 then
+      "linux-arm"
+    else
+      "linux";
+
   # LazyVim's default ensure_installed, plus its lang.nix extra.
   languages = [
     "bash"
@@ -111,7 +122,7 @@ in
                   nixpkgs = { expr = "import ${inputs.nixpkgs} { }" },
                   options = {
                     ["home-manager"] = {
-                      expr = [[(builtins.getFlake "git+file://${config.xdg.configHome}/home-manager").homeConfigurations."${config.home.username}@linux".options]],
+                      expr = [[(builtins.getFlake "git+file://${config.xdg.configHome}/home-manager").homeConfigurations."${config.home.username}@${role}".options]],
                     },
                   },
                 },
