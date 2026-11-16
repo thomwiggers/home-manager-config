@@ -91,7 +91,8 @@
         untracked = "cyan";
       };
       core = {
-        editor = "vim";
+        # Not left to $EDITOR, which is unset outside our shells (systemd, launchd, GUI apps).
+        editor = "nvim";
         eol = "lf";
         autocrlf = false;
         whitespace = "trailing-space";
@@ -110,7 +111,7 @@
         autoSetupRemote = true;
       };
       merge = {
-        tool = "vimdiff";
+        tool = "nvimdiff";
         conflictstyle = "diff3";
       };
       commit.gpgsign = false;
