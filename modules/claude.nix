@@ -36,9 +36,13 @@ let
 
   # Nix: the client talks to nix-daemon over its Unix socket. macOS can allow
   # just that socket; on Linux the seccomp filter is all-or-nothing, so every
-  # Unix socket is opened. ~/.cache/nix holds the eval/fetcher caches; /nix
-  # is only writable for single-user installs (nix-user-chroot, containers),
-  # where Unix permissions don't already stop it.
+  # Unix socket is opened. ~/.cache/nix holds the eval/fetcher caches.
+  #
+  # Single-user installs (nix-user-chroot, containers without systemd) have
+  # no daemon: nix itself writes /nix. The sandbox doesn't get that write
+  # access, which would let a session rewrite the tools in the profile;
+  # instead the nix commands that build run outside it, where the permission
+  # mode still applies. Probed at activation, like the nested sandbox.
   #
   # Python: uv/uvx and pip caches; ~/.local/share/uv holds uv-managed Pythons and
   # tools. pip uses ~/Library/Caches/pip on macOS.
@@ -157,8 +161,8 @@ let
             "~/.cache/nix",
             "~/.cache/uv",
             "~/.local/share/uv",
-            "~/.cache/pip",${lib.optionalString isDarwin ''"~/Library/Caches/pip",''}
-            "/nix"
+            ${lib.optionalString isDarwin ''"~/Library/Caches/pip",''}
+            "~/.cache/pip"
           ]
         }
       },
@@ -204,6 +208,15 @@ let
       ')
       deny_token=$(${jq} -n --arg t "$token_file" '["Read(/" + $t + ")"]')
     ''}
+    nix_excluded='[]'
+    if [ -O ${builtins.storeDir} ]; then
+      nix_excluded='[
+        "nix build", "nix build *",
+        "nix flake *",
+        "nix eval *",
+        "nix fmt", "nix fmt *"
+      ]'
+    fi
     # macOS keychain CLI; the sandbox can't block keychain access via securityd.
     # gh runs outside the sandbox (excludedCommands) so it can read its token
     # from ~/.config/gh/hosts.yml or the keychain, which the sandbox denies.
@@ -226,6 +239,7 @@ let
       --argjson sandbox_write "$sandbox_write" \
       --argjson token_files "$token_files" \
       --argjson deny_token "$deny_token" \
+      --argjson nix_excluded "$nix_excluded" \
       --argjson weaker "$weaker" '
       . * $defaults
       | .sandbox.enableWeakerNestedSandbox = $weaker
@@ -239,6 +253,7 @@ let
         then .sandbox.filesystem.allowWrite = (((.sandbox.filesystem.allowWrite // []) + $sandbox_write) | unique)
         else . end
       | .sandbox.credentials.files += $token_files
+      | .sandbox.excludedCommands += $nix_excluded
       | .permissions.deny = (((.permissions.deny // []) + $deny + $deny_token) | unique)
     '
   '';
