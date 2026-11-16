@@ -10,22 +10,68 @@ on:
         required: false
         default: ""
 
-permissions:
-  contents: write
-  pull-requests: write
+# One run per PR branch at a time, so a later dispatch can't move the branch
+# between another run's build and merge.
+concurrency:
+  group: update-flake-lock-${{ inputs.input }}
+
+permissions: {}
 
 jobs:
   update:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      pr: ${{ steps.update.outputs.pull-request-number }}
+      sha: ${{ steps.head.outputs.sha }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # Upstream Nix, as on the machines (bootstrap.sh).
-      - uses: cachix/install-nix-action@v31
+      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: DeterminateSystems/update-flake-lock@v29
+      - id: update
+        uses: DeterminateSystems/update-flake-lock@da03c0f078bc4b2c37ee4f7e072d34bf8f188bb3 # v29
         with:
           inputs: ${{ inputs.input }}
           branch: ${{ inputs.input && format('update_flake_lock_{0}', inputs.input) || 'update_flake_lock_action' }}
           pr-title: "${{ inputs.input && format('flake.lock: update {0}', inputs.input) || 'flake.lock: update inputs' }}"
           pr-labels: dependencies
+      # The action doesn't output the PR's head commit; build and merge pin it.
+      - id: head
+        if: steps.update.outputs.pull-request-number != '' && steps.update.outputs.pull-request-operation != 'closed'
+        run: echo "sha=$(gh pr view "$PR" --json headRefOid --jq .headRefOid)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ steps.update.outputs.pull-request-number }}
+
+  # PRs opened with GITHUB_TOKEN get no pull_request CI run, so build the PR
+  # head here. No Cachix push token: like Dependabot PRs, unreviewed lock
+  # bumps only read the cache.
+  build:
+    needs: update
+    if: needs.update.outputs.sha != ''
+    permissions:
+      contents: read
+    uses: ./.github/workflows/build.yaml
+    with:
+      ref: ${{ needs.update.outputs.sha }}
+
+  # Merge only the commit that was built, once every build has passed (as
+  # ci.yaml's automerge does for Dependabot).
+  merge:
+    needs: [update, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - run: gh pr merge "$PR" --merge --match-head-commit "$SHA"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ needs.update.outputs.pr }}
+          SHA: ${{ needs.update.outputs.sha }}
