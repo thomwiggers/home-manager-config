@@ -1,0 +1,42 @@
+name: build
+
+# Shared by ci.yaml and update-flake-lock.yaml, which can't get a CI run on
+# its PRs (GITHUB_TOKEN-created PRs don't trigger pull_request workflows).
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: Commit to build (empty builds the triggering ref)
+        type: string
+        default: ""
+    secrets:
+      CACHIX_AUTH_TOKEN:
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+      # Upstream Nix, as on the machines (bootstrap.sh).
+      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
+        with:
+          github_access_token: ${{ github.token }}
+      # Pulls from and pushes to the Cachix cache, so builds missing from
+      # cache.nixos.org (e.g. Darwin Swift builds lagging on Hydra) are done
+      # once and reach the machines too. Push needs CACHIX_AUTH_TOKEN; without
+      # it (e.g. Dependabot PRs, update-flake-lock.yaml) the cache is only read.
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: thomwiggers
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      - run: nix flake check

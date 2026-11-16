@@ -53,7 +53,7 @@
       user = {
         name = "Thom Wiggers";
         email = "thom@thomwiggers.nl";
-        signingkey = "4871E82F";
+        signingkey = "C313856D66DA0DDDDC5C6203915D4ED34871E82F";
       };
       alias = {
         br = "branch";
@@ -91,7 +91,8 @@
         untracked = "cyan";
       };
       core = {
-        editor = "vim";
+        # Not left to $EDITOR, which is unset outside our shells (systemd, launchd, GUI apps).
+        editor = "nvim";
         eol = "lf";
         autocrlf = false;
         whitespace = "trailing-space";
@@ -110,7 +111,7 @@
         autoSetupRemote = true;
       };
       merge = {
-        tool = "vimdiff";
+        tool = "nvimdiff";
         conflictstyle = "diff3";
       };
       commit.gpgsign = false;
@@ -175,7 +176,7 @@
     # which the old gpg.conf did not set.
     settings = lib.mkForce {
       # The default key to sign with.
-      default-key = "915D4ED34871E82F";
+      default-key = "C313856D66DA0DDDDC5C6203915D4ED34871E82F";
 
       # behavior
       utf8-strings = true;

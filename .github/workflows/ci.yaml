@@ -5,28 +5,16 @@ on:
     branches: [main]
   pull_request:
 
+permissions: {}
+
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v7
-      # Upstream Nix, as on the machines (bootstrap.sh).
-      - uses: cachix/install-nix-action@v31
-        with:
-          github_access_token: ${{ secrets.GITHUB_TOKEN }}
-      # Pulls from and pushes to the Cachix cache, so builds missing from
-      # cache.nixos.org (e.g. Darwin Swift builds lagging on Hydra) are done
-      # once and reach the machines too. Push needs CACHIX_AUTH_TOKEN; without
-      # it (e.g. Dependabot PRs) the cache is only read.
-      - uses: cachix/cachix-action@v17
-        with:
-          name: thomwiggers
-          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-      - run: nix flake check
+    permissions:
+      contents: read
+    uses: ./.github/workflows/build.yaml
+    # Passed explicitly rather than inherited: the build needs only this one.
+    secrets:
+      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
 
   # Merge Dependabot PRs once every build has passed. Lives here rather than
   # relying on GitHub auto-merge, so it can't merge before CI without branch

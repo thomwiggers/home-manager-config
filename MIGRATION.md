@@ -128,7 +128,9 @@ both containers and VMs. Set `thom.container` in a host file to force it.
 chezmoi supported unattended, secret-less provisioning via
 `chezmoi init --apply --exclude encrypted`. The replacement is
 `THOM_NO_SECRETS=1`, which makes `bootstrap.sh` skip the age identity step
-instead of prompting for the `key.txt.age` passphrase. `home-manager switch`
+instead of prompting for the `key.txt.age` passphrase, and leave the machine
+unregistered (`hm-update` works without, and doesn't report such machines to
+healthchecks.io). `home-manager switch`
 then warns that `~/.config/age/keys.txt` is missing and skips
 `decryptSecrets`; ssh ignores the missing `Include config.private`. The
 cloud-init profiles run:

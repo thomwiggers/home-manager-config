@@ -4,7 +4,7 @@
 #
 #   ./bootstrap.sh [role]
 #   curl -fsSL https://raw.githubusercontent.com/thomwiggers/home-manager-config/main/bootstrap.sh | sh [-s -- role]
-#   curl -fsSL .../bootstrap.sh | THOM_NO_SECRETS=1 sh      # unattended, no secrets
+#   curl -fsSL .../bootstrap.sh | THOM_NO_SECRETS=1 sh      # unattended, no secrets, not registered
 #
 # Roles (see flake.nix): darwin, linux, linux-arm, chroot. Default: the role
 # this machine was registered with (machines/<hostname>), else darwin on
@@ -14,7 +14,8 @@
 #
 # Run from any checkout, it clones the repository to ~/.config/home-manager
 # (where home-manager looks for its flake) and continues from there. At the
-# end it registers the machine, so a plain `home-manager switch` works.
+# end it registers the machine, so a plain `home-manager switch` works
+# (hm-update needs no registration).
 #
 # Safe to re-run; every step is skipped when already done. Written for the
 # bash 3.2 that ships with macOS.
@@ -157,7 +158,6 @@ install_nix_rootless() {
 
 	if [[ ! -e $HOME/.nix-profile/etc/profile.d/nix.sh ]]; then
 		say "Installing single-user Nix into ~/.nix (inside nix-user-chroot)"
-		[[ -d $HOME/.nix ]] || mkdir -m 0755 "$HOME/.nix"
 		"$nix_user_chroot" "$HOME/.nix" bash -c \
 			'curl -fsSL https://nixos.org/nix/install | sh -s -- --no-daemon --no-modify-profile'
 	fi
@@ -252,7 +252,11 @@ PAGER=cat in_nix nix run "$repo#home-manager" -- news --flake "$repo#$user@$role
 
 # Lets a plain `home-manager switch` find <user>@<hostname>. Committed after
 # the switch, when Home Manager has configured git's identity.
-if [[ $(cat "$repo/machines/$host" 2>/dev/null) != "$role" ]]; then
+# Not with THOM_NO_SECRETS: those are disposable machines, and hm-update
+# refuses to switch a checkout with an unpushed commit.
+if [[ -n ${THOM_NO_SECRETS:-} ]]; then
+	say "THOM_NO_SECRETS is set; not registering $host"
+elif [[ $(cat "$repo/machines/$host" 2>/dev/null) != "$role" ]]; then
 	say "Registering $host as $role (machines/$host)"
 	mkdir -p "$repo/machines"
 	echo "$role" >"$repo/machines/$host"

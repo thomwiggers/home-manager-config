@@ -142,6 +142,7 @@ in
 
       # Remapped tools
       cat = "bat";
+      vim = "nvim";
     };
 
     # The module's completionInit slot (mkOrder 570) is too early:
@@ -166,10 +167,6 @@ in
       '')
 
       (lib.mkOrder 1000 ''
-        if $(type python3 > /dev/null); then
-            alias vim=nvim
-        fi
-
         source ~/.zsh/key-bindings.zsh
 
         zsh-defer source ${pkgs.zsh-syntax-highlighting}/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
