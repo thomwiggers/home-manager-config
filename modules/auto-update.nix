@@ -3,8 +3,8 @@
 # only to the commit just fetched from upstream: it fails, without switching,
 # on a dirty tree or unpushed local commits. Sandboxed Claude sessions may
 # write the checkout, and the job must not activate their edits unsandboxed.
-# The job reports to healthchecks.io through runitor when the ping key is
-# deployed (not on THOM_NO_SECRETS machines).
+# On machines registered in machines/ the job reports to healthchecks.io
+# through runitor, when the ping key is deployed (not with THOM_NO_SECRETS).
 {
   config,
   lib,
@@ -70,20 +70,22 @@ let
   # The scheduled job: hm-update under runitor, which pings healthchecks.io
   # on start, success and failure (with the output). The key file holds the
   # project's ping key; runitor reads it itself (file:), so it never appears
-  # on a command line. The check is created on first ping.
+  # on a command line. The check is created on first ping. Other hosts run
+  # hm-update unreported.
   hmUpdateJob = pkgs.writeShellApplication {
     name = "hm-update-job";
     runtimeInputs = [ pkgs.runitor ];
     text = ''
       key="${home}/.config/runitor/hc_key"
-      if [ -r "$key" ] && [ -s "$key" ]; then
-        host=$(uname -n)
-        host=''${host%%.*}
+      host=$(uname -n)
+      host=''${host%%.*}
+      # Registered machines only: a disposable host would leave a check
+      # behind that alerts forever once the machine is gone.
+      if [ -s "${config.xdg.configHome}/home-manager/machines/$host" ] && [ -r "$key" ] && [ -s "$key" ]; then
         # Slugs are lowercase.
         export PING_KEY="file:$key" CHECK_SLUG="hm-update-''${host,,}"
         exec runitor -create -- ${lib.getExe hmUpdate}
       fi
-      echo "hm-update-job: no readable $key; not reporting to healthchecks.io" >&2
       exec ${lib.getExe hmUpdate}
     '';
   };
