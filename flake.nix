@@ -12,6 +12,12 @@
       url = "github:thomwiggers/thom-container";
       flake = false;
     };
+    # Prebuilt Rex and its Home Manager module (preview channel); the lock
+    # file pins the release, `nix flake update rex` moves it.
+    rex = {
+      url = "https://pkgs.superlogical.com/rex/nix/preview.tar.gz";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =

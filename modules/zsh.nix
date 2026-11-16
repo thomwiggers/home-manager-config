@@ -248,6 +248,10 @@ in
 
       nodejs.disabled = true;
 
+      # `thom` is the usual account, shown only when starship's defaults say
+      # so (ssh, root); any other account is always spelled out.
+      username.show_always = config.home.username != "thom";
+
       # "direnv" when all is well; only problems are spelled out
       direnv = {
         disabled = false;

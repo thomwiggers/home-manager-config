@@ -21,6 +21,7 @@
     ./modules/packages.nix
     ./modules/neovim.nix
     ./modules/ghostty.nix
+    ./modules/rex.nix
     ./modules/scripts.nix
     ./modules/auto-update.nix
   ];
