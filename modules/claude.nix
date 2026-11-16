@@ -157,7 +157,6 @@ let
             ${builtins.toJSON cfg.dotfilesDir}
           ],
           "allowWrite": [
-            ${builtins.toJSON cfg.dotfilesDir},
             "~/.cache/nix",
             "~/.cache/uv",
             "~/.local/share/uv",
@@ -264,9 +263,10 @@ in
       type = lib.types.str;
       default = "~/.config/home-manager";
       description = ''
-        Checkout of this repository, which Claude Code's sandbox may read and
-        write. bootstrap.sh clones it here, where home-manager looks by
-        default.
+        Checkout of this repository, which Claude Code's sandbox may read.
+        Not writable from other projects' sessions: hm-update activates it
+        unsandboxed, and trusts its .git/config for what upstream is.
+        bootstrap.sh clones it here, where home-manager looks by default.
       '';
     };
   };
