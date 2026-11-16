@@ -254,18 +254,6 @@ in
         default.
       '';
     };
-    jsonMerge = lib.mkOption {
-      type = lib.types.package;
-      readOnly = true;
-      default = jsonMerge;
-      description = "Merge filter for ~/.claude.json (stdin to stdout); used by verify.sh.";
-    };
-    settingsMerge = lib.mkOption {
-      type = lib.types.package;
-      readOnly = true;
-      default = settingsMerge;
-      description = "Merge filter for ~/.claude/settings.json (stdin to stdout); used by verify.sh.";
-    };
   };
 
   config.home.activation.claudeSettings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

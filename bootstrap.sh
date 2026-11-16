@@ -157,7 +157,6 @@ install_nix_rootless() {
 
 	if [[ ! -e $HOME/.nix-profile/etc/profile.d/nix.sh ]]; then
 		say "Installing single-user Nix into ~/.nix (inside nix-user-chroot)"
-		[[ -d $HOME/.nix ]] || mkdir -m 0755 "$HOME/.nix"
 		"$nix_user_chroot" "$HOME/.nix" bash -c \
 			'curl -fsSL https://nixos.org/nix/install | sh -s -- --no-daemon --no-modify-profile'
 	fi
