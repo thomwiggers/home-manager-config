@@ -2,6 +2,14 @@ name: update-flake-lock
 
 # Weekly updates come from Dependabot (.github/dependabot.yml); this only
 # handles single-input updates dispatched by thom-container.
+#
+# The PR is opened with a GitHub App token, not GITHUB_TOKEN: GitHub holds a
+# GITHUB_TOKEN PR's CI run for approval, and the required checks must run on
+# the PR's head commit. ci.yaml builds and merges the PR.
+#
+# Setup: a GitHub App with Contents and Pull requests read/write, installed on
+# this repository. Repository variables FLAKE_UPDATE_APP_CLIENT_ID and
+# FLAKE_UPDATE_APP_SLUG; repository secret FLAKE_UPDATE_APP_PRIVATE_KEY.
 on:
   workflow_dispatch:
     inputs:
@@ -10,8 +18,8 @@ on:
         required: false
         default: ""
 
-# One run per PR branch at a time, so a later dispatch can't move the branch
-# between another run's build and merge.
+# One run per PR branch at a time, so two dispatches don't push the branch
+# concurrently.
 concurrency:
   group: update-flake-lock-${{ inputs.input }}
 
@@ -21,57 +29,32 @@ jobs:
   update:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      pull-requests: write
-    outputs:
-      pr: ${{ steps.update.outputs.pull-request-number }}
-      sha: ${{ steps.head.outputs.sha }}
+      contents: read
     steps:
+      - id: app-token
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
+        with:
+          client-id: ${{ vars.FLAKE_UPDATE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.FLAKE_UPDATE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       # Upstream Nix, as on the machines (bootstrap.sh).
       - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
-      - id: update
-        uses: DeterminateSystems/update-flake-lock@da03c0f078bc4b2c37ee4f7e072d34bf8f188bb3 # v29
+      - uses: DeterminateSystems/update-flake-lock@da03c0f078bc4b2c37ee4f7e072d34bf8f188bb3 # v29
         with:
+          token: ${{ steps.app-token.outputs.token }}
           inputs: ${{ inputs.input }}
           branch: ${{ inputs.input && format('update_flake_lock_{0}', inputs.input) || 'update_flake_lock_action' }}
           pr-title: "${{ inputs.input && format('flake.lock: update {0}', inputs.input) || 'flake.lock: update inputs' }}"
           pr-labels: dependencies
-      # The action doesn't output the PR's head commit; build and merge pin it.
-      - id: head
-        if: steps.update.outputs.pull-request-number != '' && steps.update.outputs.pull-request-operation != 'closed'
-        run: echo "sha=$(gh pr view "$PR" --json headRefOid --jq .headRefOid)" >> "$GITHUB_OUTPUT"
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          PR: ${{ steps.update.outputs.pull-request-number }}
+          pr-body: |
+            Automated changes by the [update-flake-lock](https://github.com/DeterminateSystems/update-flake-lock) GitHub Action.
 
-  # PRs opened with GITHUB_TOKEN get no pull_request CI run, so build the PR
-  # head here. No Cachix push token: like Dependabot PRs, unreviewed lock
-  # bumps only read the cache.
-  build:
-    needs: update
-    if: needs.update.outputs.sha != ''
-    permissions:
-      contents: read
-    uses: ./.github/workflows/build.yaml
-    with:
-      ref: ${{ needs.update.outputs.sha }}
-
-  # Merge only the commit that was built, once every build has passed (as
-  # ci.yaml's automerge does for Dependabot).
-  merge:
-    needs: [update, build]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    steps:
-      - run: gh pr merge "$PR" --merge --match-head-commit "$SHA"
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          PR: ${{ needs.update.outputs.pr }}
-          SHA: ${{ needs.update.outputs.sha }}
+            ```
+            {{ env.GIT_COMMIT_MESSAGE }}
+            ```
