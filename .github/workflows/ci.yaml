@@ -13,15 +13,20 @@ jobs:
       contents: read
     uses: ./.github/workflows/build.yaml
     # Passed explicitly rather than inherited: the build needs only this one.
+    # Lock bumps from update-flake-lock.yaml are unreviewed, so they only read
+    # the cache, as Dependabot PRs (which get no secrets) do.
     secrets:
-      CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      CACHIX_AUTH_TOKEN: ${{ github.event.pull_request.user.login != format('{0}[bot]', vars.FLAKE_UPDATE_APP_SLUG) && secrets.CACHIX_AUTH_TOKEN || '' }}
 
-  # Merge Dependabot PRs once every build has passed. Lives here rather than
-  # relying on GitHub auto-merge, so it can't merge before CI without branch
-  # protection.
+  # Merge Dependabot and update-flake-lock.yaml PRs once every build has
+  # passed. Lives here rather than relying on GitHub auto-merge, so it can't
+  # merge before CI without branch protection.
   automerge:
     needs: build
-    if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
+    if: >-
+      github.event_name == 'pull_request' && (
+        github.event.pull_request.user.login == 'dependabot[bot]' ||
+        github.event.pull_request.user.login == format('{0}[bot]', vars.FLAKE_UPDATE_APP_SLUG))
     runs-on: ubuntu-latest
     permissions:
       contents: write
