@@ -45,7 +45,13 @@ in
             log="${config.xdg.cacheHome}/nvim-lazy-sync.log"
             mkdir -p "$(dirname "$log")"
             # Skip checkout lines: their commit subjects can mention "error".
+            # git fetch runs auto-maintenance in the background, which packs
+            # refs while lazy.nvim's checkout runs and makes it fail on
+            # packed-refs.lock. Run maintenance before fetch returns instead.
             if ! PATH="${config.home.profileDirectory}/bin:$PATH" \
+                GIT_CONFIG_COUNT=2 \
+                GIT_CONFIG_KEY_0=maintenance.autoDetach GIT_CONFIG_VALUE_0=false \
+                GIT_CONFIG_KEY_1=gc.autoDetach GIT_CONFIG_VALUE_1=false \
                 ${lib.getExe pkgs.neovim} --headless "+Lazy! sync" +qa >"$log" 2>&1 ||
               grep -v 'HEAD is now at' "$log" | grep -qiE 'error|failed'; then
               cat "$log" >&2
