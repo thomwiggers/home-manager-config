@@ -14,6 +14,16 @@
 let
   treesitter = pkgs.vimPlugins.nvim-treesitter;
 
+  # lazy.nvim runs :helptags on a local plugin's doc/ after every sync, which
+  # fails in the read-only store. Give it the plugin without doc/; the docs
+  # and the tags nixpkgs built for them go in stdpath("data")/site/doc.
+  treesitterNoDoc = pkgs.runCommand "nvim-treesitter-no-doc" { } ''
+    mkdir $out
+    for f in ${treesitter}/*; do
+      [[ $(basename "$f") == doc ]] || ln -s "$f" $out/
+    done
+  '';
+
   # The flake role whose options nixd should complete, by platform as in
   # hm-update's fallback (chroot shares linux's options).
   role =
@@ -68,7 +78,10 @@ let
   '';
 in
 {
-  xdg.dataFile = lib.mergeAttrsList (
+  xdg.dataFile = {
+    "nvim/site/doc".source = "${treesitter}/doc";
+  }
+  // lib.mergeAttrsList (
     map (lang: {
       "nvim/site/parser/${lang}.so".source = "${treesitter.grammarPlugins.${lang}}/parser/${lang}.so";
       "nvim/site/parser-info/${lang}.revision".source = "${revisions}/${lang}.revision";
@@ -106,7 +119,7 @@ in
     return {
       {
         "nvim-treesitter/nvim-treesitter",
-        dir = "${treesitter}",
+        dir = "${treesitterNoDoc}",
         pin = true,
         build = false,
       },
