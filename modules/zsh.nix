@@ -57,9 +57,10 @@ in
       # devbox (thom-container): Claude Code token from `devbox
       # --register-claude-token`, for shells the entrypoint didn't start (attach,
       # ssh). Claude Code reads it from the descriptor; the token itself is never
-      # in the environment.
-      if [[ -r /run/user/$UID/claude-oauth-token ]]; then
-          exec 9</run/user/$UID/claude-oauth-token
+      # in the environment. Not in Claude Code's own commands (CLAUDECODE): its
+      # sandbox denies the file, which passes -r but fails to open.
+      if [[ -z ''${CLAUDECODE-} && -r /run/user/$UID/claude-oauth-token ]] \
+          && { exec 9</run/user/$UID/claude-oauth-token } 2>/dev/null; then
           export CLAUDE_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR=9
       fi
     '';
